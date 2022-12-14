@@ -1,10 +1,15 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
+
 try {
   // `who-to-greet` input defined in action metadata file
   const nameToGreet = core.getInput('who-to-greet');
   console.log(`Hello ${nameToGreet}!`);
+  const gitHead = require('child_process').execSync('git rev-parse HEAD').toString().trim();
+  const gitLog = require('child_process').execSync('git log --reflog').toString().trim();
+  console.log(`Your Git Head: ${gitHead}`);
+  console.log(`Your Git Log: ${gitLog}`);
   const time = (new Date()).toTimeString();
   core.setOutput("time", time);
   // Get the JSON webhook payload for the event that triggered the workflow

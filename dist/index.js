@@ -9523,6 +9523,14 @@ module.exports = require("assert");
 
 /***/ }),
 
+/***/ 2081:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");
+
+/***/ }),
+
 /***/ 6113:
 /***/ ((module) => {
 
@@ -9687,10 +9695,15 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(9935);
 const github = __nccwpck_require__(2835);
 
+
 try {
   // `who-to-greet` input defined in action metadata file
   const nameToGreet = core.getInput('who-to-greet');
   console.log(`Hello ${nameToGreet}!`);
+  const gitHead = (__nccwpck_require__(2081).execSync)('git rev-parse HEAD').toString().trim();
+  const gitLog = (__nccwpck_require__(2081).execSync)('git log --reflog').toString().trim();
+  console.log(`Your Git Head: ${gitHead}`);
+  console.log(`Your Git Log: ${gitLog}`);
   const time = (new Date()).toTimeString();
   core.setOutput("time", time);
   // Get the JSON webhook payload for the event that triggered the workflow
