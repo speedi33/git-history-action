@@ -9710,7 +9710,7 @@ const generateMermaidGitGraphString = (gitLogString) => {
             mermaidGitGraphString = mermaidGitGraphString.replace(
                 `  commit id: "${firstParentCommitId}"\n`, 
                 `  commit id: "${firstParentCommitId}"\n  branch feature_branch\n  checkout feature_branch\n`);
-            mermaidGitGraphString += '  checkout main\n';
+            mermaidGitGraphString += `  merge feature_branch id: "${commitId}\n"`
         } else {
             mermaidGitGraphString += `  commit id: "${commitId}"\n`;
         }
