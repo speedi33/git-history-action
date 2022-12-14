@@ -40,27 +40,29 @@ const tryToGetBranchNameFromNextLine = (nextGitLogLine) => {
 }
 
 const generateMermaidGitGraphString = (gitLogString) => {
-    const gitLogLines = gitLogString.split('\n').slice().reverse();
+    const gitLogLines = gitLogString.split('\n');
     let mermaidGitGraphString = 'gitGraph\n';
     let branchName;
-    gitLogLines.forEach((gitLogLine, index) => {
+
+    for (let i = gitLogLines.length - 1; i >= 0; i--) {
+        const gitLogLine = gitLogLines[i];
         console.log(`>>>${gitLogLine}<<<`);
         if (isCommitLine(gitLogLine)) {
             const gitLogLineWithoutAsterisk = gitLogLine.split('*')[1];
             const commitDetails = gitLogLineWithoutAsterisk.split('-');
             const commitId = commitDetails[0].trim();
-            if (index > 0 && isMergeLine(gitLogLines[index - 1])) {
+            if (i < gitLogLines.length - 1 && isMergeLine(gitLogLines[i + 1])) {
                 mermaidGitGraphString += `  merge ${branchName} id: "${commitId}"\n`;
             } else {
                 mermaidGitGraphString += `  commit id: "${commitId}"\n`;
             }
         } else if (isBranchLine(gitLogLine)) {
-            branchName = tryToGetBranchNameFromNextLine(gitLogLines[index + 1]);
+            branchName = tryToGetBranchNameFromNextLine(gitLogLines[i - 1]);
             mermaidGitGraphString += `  branch ${branchName}\n  checkout ${branchName}\n`;
         } else if (isMergeLine(gitLogLine)) {
             mermaidGitGraphString += '  checkout main';
         }
-    });
+    }
     return mermaidGitGraphString;
 }
 
