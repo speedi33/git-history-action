@@ -1,12 +1,15 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-
+const bash = require('child_process');
 
 try {
   // `who-to-greet` input defined in action metadata file
   const nameToGreet = core.getInput('who-to-greet');
+  const gitLogFile = 'git.log';
   console.log(`Hello ${nameToGreet}!`);
-  const gitLog = require('child_process').execSync('git log --pretty=oneline').toString().trim();
+  bash.execSync(`git log --pretty=oneline --all --reflog > ${gitLogFile}`);
+  const gitLog = bash.execSync(`cat ${gitLogFile}`).toString().trim();
+  bash.execSync(`rm ${gitLogFile}`);
   console.log(`Your Git Log:\n${gitLog}`);
   const time = (new Date()).toTimeString();
   core.setOutput("time", time);
