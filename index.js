@@ -7,8 +7,19 @@ const generateMermaidGitGraphString = (gitLogString) => {
     const gitLogLines = gitLogString.split('\n');
     let mermaidGitGraphString = 'gitGraph\n';
     for (const gitLogLine of gitLogLines) {
-        const commitId = gitLogLine.substring(0, gitLogLine.indexOf(' '));
-        mermaidGitGraphString += `  commit id: "${commitId}"\n`;
+        const commitDetails = gitLogLine.split('||');
+        console.log(`gitLogLine: <<<<${gitLogLine}>>>>`);
+        const commitId = commitDetails[0];
+        const commitParentIds = commitDetails[1];
+        if (commitParentIds && commitParentIds.includes(' ')) {
+            const firstParentCommitId = commitParentIds.split(' ')[0];
+            mermaidGitGraphString = mermaidGitGraphString.replace(
+                `  commit id: "${firstParentCommitId}"\n`, 
+                `  commit id: "${firstParentCommitId}"\n  branch feature_branch\n  checkout feature_branch\n`);
+            mermaidGitGraphString += '  checkout main\n';
+        } else {
+            mermaidGitGraphString += `  commit id: "${commitId}"\n`;
+        }
     }
     return mermaidGitGraphString;
 }
@@ -16,26 +27,6 @@ const generateMermaidGitGraphString = (gitLogString) => {
 const writeIndexHtml = (mermaidString) => {
     const htmlContent = `
     <h1>Hello</h1>
-
-<pre class="mermaid">
-%%{init: { 'logLevel': 'debug', 'theme': 'base', 'gitGraph': {'rotateCommitLabel': true}} }%%
-gitGraph
-  commit id: "feat(api): ..."
-  commit id: "a"
-  commit id: "b"
-  commit id: "fix(client): .extra long label.."
-  branch c2
-  commit id: "feat(modules): ..."
-  commit id: "test(client): ..."
-  checkout main
-  commit id: "fix(api): ..."
-  commit id: "ci: ..."
-  branch b1
-  commit
-  branch b2
-  commit
-</pre>
-
 <pre class="mermaid">
 %%{init: { 'logLevel': 'debug', 'theme': 'base', 'gitGraph': {'rotateCommitLabel': true}} }%%
 ${mermaidString}
@@ -59,7 +50,7 @@ try {
   const nameToGreet = core.getInput('who-to-greet');
   const gitLogFile = 'git.log';
   console.log(`Hello ${nameToGreet}!`);
-  bash.execSync(`git log --pretty=oneline --all --reflog --decorate --reverse --pretty=format:"%h %s @%d"> ${gitLogFile}`);
+  bash.execSync(`git log --pretty=oneline --all --reflog --decorate --reverse --pretty=format:"%h||%p||%s||%d" > ${gitLogFile}`);
   const gitLog = bash.execSync(`cat ${gitLogFile}`).toString().trim();
   bash.execSync(`rm ${gitLogFile}`);
   console.log(`Your Git Log:\n${gitLog}`);
