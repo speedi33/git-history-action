@@ -9,6 +9,7 @@ const generateMermaidGitGraphString = (gitLogString) => {
     for (const gitLogLine of gitLogLines) {
         const commitDetails = gitLogLine.split('||');
         console.log(`gitLogLine: <<<<${gitLogLine}>>>>`);
+        console.log(`mermaidString: <<<<${mermaidGitGraphString}>>>>`);
         const commitId = commitDetails[0];
         const commitParentIds = commitDetails[1];
         if (commitParentIds && commitParentIds.includes(' ')) {
