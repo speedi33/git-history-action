@@ -9697,34 +9697,29 @@ const github = __nccwpck_require__(2835);
 const bash = __nccwpck_require__(2081);
 const fs = __nccwpck_require__(7147);
 
+let featureBranchCounter = 0;
+
 const generateMermaidGitGraphString = (gitLogString) => {
     const gitLogLines = gitLogString.split('\n');
     let mermaidGitGraphString = 'gitGraph\n';
     for (const gitLogLine of gitLogLines) {
         const commitDetails = gitLogLine.split('||');
-        console.log(`gitLogLine: <<<<${gitLogLine}>>>>`);
-        console.log(`BEFORE mermaidString: <<<<${mermaidGitGraphString}>>>>`);
         const commitId = commitDetails[0];
         const commitParentIds = commitDetails[1];
         if (commitParentIds && commitParentIds.includes(' ')) {
+            const featureBranchName = `feature_branch_${featureBranchCounter}`;
+            // merge commit!
             const firstParentCommitId = commitParentIds.split(' ')[0];
-            console.log(`MERGE COMMIT FOUND! Introducing branch at commit ${firstParentCommitId}`);
-            if (mermaidGitGraphString.includes(`  commit id: "${firstParentCommitId}"\n`)) {
-                // branch after a normal commit
+            if (mermaidGitGraphString.includes(`id: "${firstParentCommitId}"\n`)) {
                 mermaidGitGraphString = mermaidGitGraphString.replace(
-                    `  commit id: "${firstParentCommitId}"\n`, 
-                    `  commit id: "${firstParentCommitId}"\n  branch feature_branch\n  checkout feature_branch\n`);
-            } else if (mermaidGitGraphString.includes(`  merge feature_branch id: "${firstParentCommitId}"\n`)) {
-                // branch directly after a merge commit
-                mermaidGitGraphString = mermaidGitGraphString.replace(
-                    `  merge feature_branch id: "${firstParentCommitId}"\n`, 
-                    `  merge feature_branch id: "${firstParentCommitId}"\n  branch feature_branch\n  checkout feature_branch\n`);
+                    `id: "${firstParentCommitId}"\n`, 
+                    `id: "${firstParentCommitId}"\n  branch ${featureBranchName}\n  checkout ${featureBranchName}\n`);
             }
-            mermaidGitGraphString += `  checkout main\n  merge feature_branch id: "${commitId}"\n`
+            mermaidGitGraphString += `  checkout main\n  merge ${featureBranchName} id: "${commitId}"\n`;
+            featureBranchCounter++;
         } else {
             mermaidGitGraphString += `  commit id: "${commitId}"\n`;
         }
-        console.log(`AFTER  mermaidString: <<<<${mermaidGitGraphString}>>>>`);
     }
     return mermaidGitGraphString;
 }
