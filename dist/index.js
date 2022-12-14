@@ -9709,9 +9709,17 @@ const generateMermaidGitGraphString = (gitLogString) => {
         if (commitParentIds && commitParentIds.includes(' ')) {
             const firstParentCommitId = commitParentIds.split(' ')[0];
             console.log(`MERGE COMMIT FOUND! Introducing branch at commit ${firstParentCommitId}`);
-            mermaidGitGraphString = mermaidGitGraphString.replace(
-                `  commit id: "${firstParentCommitId}"\n`, 
-                `  commit id: "${firstParentCommitId}"\n  branch feature_branch\n  checkout feature_branch\n`);
+            if (mermaidGitGraphString.includes(`  commit id: "${firstParentCommitId}"\n`)) {
+                // branch after a normal commit
+                mermaidGitGraphString = mermaidGitGraphString.replace(
+                    `  commit id: "${firstParentCommitId}"\n`, 
+                    `  commit id: "${firstParentCommitId}"\n  branch feature_branch\n  checkout feature_branch\n`);
+            } else if (mermaidGitGraphString.includes(`  merge feature_branch id: "${firstParentCommitId}"\n`)) {
+                // branch directly after a merge commit
+                mermaidGitGraphString = mermaidGitGraphString.replace(
+                    `  merge feature_branch id: "${firstParentCommitId}"\n`, 
+                    `  merge feature_branch id: "${firstParentCommitId}"\n  branch feature_branch\n  checkout feature_branch\n`);
+            }
             mermaidGitGraphString += `  merge feature_branch id: "${commitId}"\n`
         } else {
             mermaidGitGraphString += `  commit id: "${commitId}"\n`;
