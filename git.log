@@ -1,0 +1,17 @@
+* 4f808ac - add dummy file - speedi33 (dummy-branch)
+* 2439b7f - Try with simplified - speedi33 (HEAD -> main, origin/main, origin/HEAD)
+* 9de1835 - Add checkout main before merge - speedi33
+* 9c9f785 - Fix branching after merge commits - speedi33
+* 2923ee1 - Add more console.logs - speedi33
+* c288058 - Add debug console.log's - speedi33
+* 0e85706 - Fix mermaid syntax - speedi33
+* 0235322 - Use correct mermaid syntax - speedi33
+* fd61a47 - Rebuild dist - speedi33
+* a105041 - Try with branching - speedi33
+* 58a889a - Create docs/index.html during action - speedi33
+* 3a0bf6e - First try to generate mermaid string - speedi33
+* 078562a - Save git log to file and read file - speedi33
+* db1ed32 - Use git log oneline - speedi33
+* b0efb93 - Try getting git log info - speedi33
+* 6092cef - Use compiled index.js - speedi33
+* 8343da5 - Initial commit - speedi33
