@@ -9699,28 +9699,62 @@ const fs = __nccwpck_require__(7147);
 
 let featureBranchCounter = 0;
 
-const generateMermaidGitGraphString = (gitLogString) => {
-    const gitLogLines = gitLogString.split('\n');
-    let mermaidGitGraphString = 'gitGraph\n';
-    for (const gitLogLine of gitLogLines) {
-        const commitDetails = gitLogLine.split('||');
-        const commitId = commitDetails[0];
-        const commitParentIds = commitDetails[1];
-        if (commitParentIds && commitParentIds.includes(' ')) {
-            const featureBranchName = `feature_branch_${featureBranchCounter}`;
-            // merge commit!
-            const firstParentCommitId = commitParentIds.split(' ')[0];
-            if (mermaidGitGraphString.includes(`id: "${firstParentCommitId}"\n`)) {
-                mermaidGitGraphString = mermaidGitGraphString.replace(
-                    `id: "${firstParentCommitId}"\n`, 
-                    `id: "${firstParentCommitId}"\n  branch ${featureBranchName}\n  checkout ${featureBranchName}\n`);
-            }
-            mermaidGitGraphString += `  checkout main\n  merge ${featureBranchName} id: "${commitId}"\n`;
-            featureBranchCounter++;
-        } else {
-            mermaidGitGraphString += `  commit id: "${commitId}"\n`;
-        }
+const isSpecialLine = (gitLogLine, indicator) => {
+    if (gitLogLine.startsWith(indicator)) {
+        return true;
+    } else if (gitLogLine.startsWith('| ')) {
+        return isCommitLine(gitLogLine.substring(2));
+    } else {
+        return false;
     }
+}
+
+const isCommitLine = (gitLogLine) => {
+    return isSpecialLine(gitLogLine, '*');
+}
+
+const isBranchLine = (gitLogLine) => {
+    return isSpecialLine(gitLogLine, '|/');
+}
+
+const isMergeLine = (gitLogLine) => {
+    return isSpecialLine(gitLogLine, '|\\');
+}
+
+const tryToGetBranchNameFromNextLine = (nextGitLogLine) => {
+    const branchNamePrefix = '(';
+    const branchNameSuffix = ')';
+    if (nextGitLogLine.includes(branchNamePrefix) && nextGitLogLine.includes(branchNameSuffix)) {
+        const branchNameStartIndex = nextGitLogLine.lastIndexOf(branchNamePrefix) + 1;
+        const branchNameEndIndex = nextGitLogLine.lastIndexOf(branchNameSuffix);
+        return nextGitLogLine.substring(branchNameStartIndex, branchNameEndIndex);
+    } else {
+        return 'feature_branch';
+    }
+}
+
+const generateMermaidGitGraphString = (gitLogString) => {
+    const gitLogLines = gitLogString.split('\n').slice().reverse();
+    let mermaidGitGraphString = 'gitGraph\n';
+    let branchName;
+    gitLogLines.forEach((gitLogLine, index) => {
+        console.log(`>>>${gitLogLine}<<<`);
+        if (isCommitLine(gitLogLine)) {
+            const gitLogLineWithoutAsterisk = gitLogLine.split('*')[1];
+            const commitDetails = gitLogLineWithoutAsterisk.split('-');
+            const commitId = commitDetails[0].trim();
+            if (index > 0 && isMergeLine(gitLogLines[index - 1])) {
+                mermaidGitGraphString += `  merge ${branchName} id: "${commitId}"\n`;
+            } else {
+                mermaidGitGraphString += `  commit id: "${commitId}"\n`;
+            }
+        } else if (isBranchLine(gitLogLine)) {
+            branchName = tryToGetBranchNameFromNextLine(gitLogLines[index + 1]);
+            mermaidGitGraphString += `  branch ${branchName}\n  checkout ${branchName}\n`;
+        } else if (isMergeLine(gitLogLine)) {
+            mermaidGitGraphString += '  checkout main';
+        }
+    });
     return mermaidGitGraphString;
 }
 
@@ -9750,7 +9784,7 @@ try {
   const nameToGreet = core.getInput('who-to-greet');
   const gitLogFile = 'git.log';
   console.log(`Hello ${nameToGreet}!`);
-  bash.execSync(`git log --pretty=oneline --all --reflog --decorate --reverse --pretty=format:"%h||%p||%s||%d" > ${gitLogFile}`);
+  bash.execSync(`git log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all > ${gitLogFile}`);
   const gitLog = bash.execSync(`cat ${gitLogFile}`).toString().trim();
   bash.execSync(`rm ${gitLogFile}`);
   console.log(`Your Git Log:\n${gitLog}`);
