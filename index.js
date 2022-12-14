@@ -26,7 +26,7 @@ const generateMermaidGitGraphString = (gitLogString) => {
                     `  merge feature_branch id: "${firstParentCommitId}"\n`, 
                     `  merge feature_branch id: "${firstParentCommitId}"\n  branch feature_branch\n  checkout feature_branch\n`);
             }
-            mermaidGitGraphString += `  merge feature_branch id: "${commitId}"\n`
+            mermaidGitGraphString += `  checkout main\n  merge feature_branch id: "${commitId}"\n`
         } else {
             mermaidGitGraphString += `  commit id: "${commitId}"\n`;
         }
