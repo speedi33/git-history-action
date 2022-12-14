@@ -9,7 +9,7 @@ const isSpecialLine = (gitLogLine, indicator) => {
     if (gitLogLine.startsWith(indicator)) {
         return true;
     } else if (gitLogLine.startsWith('| ')) {
-        return isCommitLine(gitLogLine.substring(2));
+        return isSpecialLine(gitLogLine.substring(2), indicator);
     } else {
         return false;
     }
@@ -20,11 +20,11 @@ const isCommitLine = (gitLogLine) => {
 }
 
 const isBranchLine = (gitLogLine) => {
-    return isSpecialLine(gitLogLine, '|/');
+    return isSpecialLine(gitLogLine, '|\\');
 }
 
 const isMergeLine = (gitLogLine) => {
-    return isSpecialLine(gitLogLine, '|\\');
+    return isSpecialLine(gitLogLine, '|/');
 }
 
 const tryToGetBranchNameFromNextLine = (nextGitLogLine) => {
@@ -39,11 +39,52 @@ const tryToGetBranchNameFromNextLine = (nextGitLogLine) => {
     }
 }
 
+const reverseLogLines = (gitLogLines) => {
+    const reversedLogLines = [];
+    for (let i = gitLogLines.length - 1; i >= 0; i--) {
+        const gitLogLine = gitLogLines[i];
+        if (gitLogLine.startsWith('|')) {
+            reversedLogLines.push(gitLogLine.includes('/') ? gitLogLine.replace('/', '\\') : gitLogLine.replace('\\', '/'));
+        } else {
+            reversedLogLines.push(gitLogLine);
+        }
+    }
+    return reversedLogLines;
+}
+
 const generateMermaidGitGraphString = (gitLogString) => {
-    const gitLogLines = gitLogString.split('\n');
+    const gitLogLines = reverseLogLines(gitLogString.split('\n'));
     let mermaidGitGraphString = 'gitGraph\n';
     let branchName;
+    let previousBranchIndex;
 
+    gitLogLines.forEach((gitLogLine, index) => {
+        console.log(`>>>${gitLogLine}<<< commit line? ${isCommitLine(gitLogLine)}`);
+        if (isCommitLine(gitLogLine)) {
+            console.log(`commit line -> previousBranchIndex: ${previousBranchIndex}`);
+            const gitLogLineWithoutAsterisk = gitLogLine.split('*')[1];
+            const commitDetails = gitLogLineWithoutAsterisk.split('-');
+            const commitId = commitDetails[0].trim();
+            if (index > 0 && isMergeLine(gitLogLines[index - 1])) {
+                mermaidGitGraphString += `  merge ${branchName} id: "${commitId}"\n`;
+            } else {
+                if (previousBranchIndex && previousBranchIndex !== gitLogLine.indexOf('*')) {
+                    mermaidGitGraphString += '  checkout main\n';
+                }
+                mermaidGitGraphString += `  commit id: "${commitId}"\n`;
+            }
+            previousBranchIndex = gitLogLine.indexOf('*');
+        } else {
+            if (isBranchLine(gitLogLine)) {
+                branchName = tryToGetBranchNameFromNextLine(gitLogLines[index + 1]);
+                mermaidGitGraphString += `  branch ${branchName}\n  checkout ${branchName}\n`;
+            } else if (isMergeLine(gitLogLine)) {
+                mermaidGitGraphString += '  checkout main\n';
+            }
+        }
+    });
+
+    /*
     for (let i = gitLogLines.length - 1; i >= 0; i--) {
         const gitLogLine = gitLogLines[i];
         console.log(`>>>${gitLogLine}<<<`);
@@ -56,13 +97,17 @@ const generateMermaidGitGraphString = (gitLogString) => {
             } else {
                 mermaidGitGraphString += `  commit id: "${commitId}"\n`;
             }
-        } else if (isBranchLine(gitLogLine)) {
-            branchName = tryToGetBranchNameFromNextLine(gitLogLines[i - 1]);
-            mermaidGitGraphString += `  branch ${branchName}\n  checkout ${branchName}\n`;
-        } else if (isMergeLine(gitLogLine)) {
-            mermaidGitGraphString += '  checkout main';
+        } else {
+            const reversedGitLogLine = gitLogLine.includes('/') ? gitLogLine.replace('/', '\\') : gitLogLine.replace('\\', '/');
+            if (isBranchLine(reversedGitLogLine)) {
+                branchName = tryToGetBranchNameFromNextLine(gitLogLines[i + 1]);
+                mermaidGitGraphString += `  branch ${branchName}\n  checkout ${branchName}\n`;
+            } else if (isMergeLine(reversedGitLogLine)) {
+                mermaidGitGraphString += '  checkout main\n';
+            }
         }
     }
+    */
     return mermaidGitGraphString;
 }
 
