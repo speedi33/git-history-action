@@ -9695,19 +9695,57 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(9935);
 const github = __nccwpck_require__(2835);
 const bash = __nccwpck_require__(2081);
-
-const splitAtFirstOccurrence = (string, delimiter) => {
-    return string.substring(string.indexOf(delimiter) + 1);
-}
+const fs = __nccwpck_require__(7147);
 
 const generateMermaidGitGraphString = (gitLogString) => {
     const gitLogLines = gitLogString.split('\n');
     let mermaidGitGraphString = 'gitGraph\n';
-    for (const gitLogLine in gitLogLines) {
-        const commitId = splitAtFirstOccurrence(gitLogLine, ' ');
-        mermaidGitGraphString += `commit id: "${commitId}"\n`;
+    for (const gitLogLine of gitLogLines) {
+        const commitId = gitLogLine.substring(0, gitLogLine.indexOf(' '));
+        mermaidGitGraphString += `  commit id: "${commitId}"\n`;
     }
     return mermaidGitGraphString;
+}
+
+const writeIndexHtml = (mermaidString) => {
+    const htmlContent = `
+    <h1>Hello</h1>
+
+<pre class="mermaid">
+%%{init: { 'logLevel': 'debug', 'theme': 'base', 'gitGraph': {'rotateCommitLabel': true}} }%%
+gitGraph
+  commit id: "feat(api): ..."
+  commit id: "a"
+  commit id: "b"
+  commit id: "fix(client): .extra long label.."
+  branch c2
+  commit id: "feat(modules): ..."
+  commit id: "test(client): ..."
+  checkout main
+  commit id: "fix(api): ..."
+  commit id: "ci: ..."
+  branch b1
+  commit
+  branch b2
+  commit
+</pre>
+
+<pre class="mermaid">
+%%{init: { 'logLevel': 'debug', 'theme': 'base', 'gitGraph': {'rotateCommitLabel': true}} }%%
+${mermaidString}
+</pre>
+
+<script type="module">
+  import mermaid from 'https://unpkg.com/mermaid@9/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true });
+</script>
+    `;
+
+    if (fs.existsSync('docs')) {
+        fs.rmSync('docs', {recursive: true, force: true});
+    }
+    fs.mkdirSync('docs');
+    fs.writeFileSync('docs/index.html', htmlContent);
 }
 
 try {
@@ -9719,7 +9757,9 @@ try {
   const gitLog = bash.execSync(`cat ${gitLogFile}`).toString().trim();
   bash.execSync(`rm ${gitLogFile}`);
   console.log(`Your Git Log:\n${gitLog}`);
-  console.log(`Your Mermaid string:\n${generateMermaidGitGraphString(gitLog)}`);
+  const mermaidGitGraphString = generateMermaidGitGraphString(gitLog);
+  console.log(`Your Mermaid string:\n${mermaidGitGraphString}`);
+  writeIndexHtml(mermaidGitGraphString);
   const time = (new Date()).toTimeString();
   core.setOutput("time", time);
   // Get the JSON webhook payload for the event that triggered the workflow
