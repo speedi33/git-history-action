@@ -9703,11 +9703,12 @@ const generateMermaidGitGraphString = (gitLogString) => {
     for (const gitLogLine of gitLogLines) {
         const commitDetails = gitLogLine.split('||');
         console.log(`gitLogLine: <<<<${gitLogLine}>>>>`);
-        console.log(`mermaidString: <<<<${mermaidGitGraphString}>>>>`);
+        console.log(`BEFORE mermaidString: <<<<${mermaidGitGraphString}>>>>`);
         const commitId = commitDetails[0];
         const commitParentIds = commitDetails[1];
         if (commitParentIds && commitParentIds.includes(' ')) {
             const firstParentCommitId = commitParentIds.split(' ')[0];
+            console.log(`MERGE COMMIT FOUND! Introducing branch at commit ${firstParentCommitId}`);
             mermaidGitGraphString = mermaidGitGraphString.replace(
                 `  commit id: "${firstParentCommitId}"\n`, 
                 `  commit id: "${firstParentCommitId}"\n  branch feature_branch\n  checkout feature_branch\n`);
@@ -9715,6 +9716,7 @@ const generateMermaidGitGraphString = (gitLogString) => {
         } else {
             mermaidGitGraphString += `  commit id: "${commitId}"\n`;
         }
+        console.log(`AFTER  mermaidString: <<<<${mermaidGitGraphString}>>>>`);
     }
     return mermaidGitGraphString;
 }
