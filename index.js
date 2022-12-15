@@ -158,25 +158,46 @@ const commitIdFromFromLine = (gitLogLine) => {
     return commitId;
 }
 
-const commitIdFromMessage = (commitMessage, gitLogLines) => {
-    for (const gitLogLine of gitLogLines) {
-        if (gitLogLine.toLowerCase().includes(commitMessage)) {
-            return commitIdFromFromLine(gitLogLine);
-        }
-    }
-}
-
 const gitLogLineMapper = (gitLogLine) => {
     const commitLine = gitLogLine.split(' - ');
     let gitLogLineHtml = '<div class="commit">';
-    for (const commitDetail of commitLine) {
-        gitLogLineHtml += `<p>${commitDetail}</p>`;
+
+    if (commitLine.length === 1) {
+        let color = 'black';
+        gitLogLineHtml += '<p>';
+        for (let i = 0; i < commitLine.length; i++) {
+            const currentChar = commitLine.charAt(i);
+            if (currentChar === '/' || currentChar === '\\') {
+                if (i === 1) {
+                    color = 'red';
+                } else {
+                    color = 'blue';
+                }
+                gitLogLineHtml += `<span style="color:${color}">${currentChar}</span>`;
+            } else {
+                gitLogLineHtml += currentChar;
+            }
+        }
+        gitLogLineHtml += '</p>';
+    } else {
+        const graph = commitLine[0].trim().split(' ')[0];
+        const commitId = commitLine[0].trim().split(' ')[1];
+        const commitMessage = commitLine[1].trim();
+        const commitAuthor = commitLine[2].trim();
+
+        gitLogLineHtml += `<p>${graph}</p>`;
+        gitLogLineHtml += `<p>${commitId}</p>`;
+        gitLogLineHtml += `<p>${commitMessage}</p>`;
+        gitLogLineHtml += `<p>${commitAuthor}</p>`;
     }
+
+    
     gitLogLineHtml += '</div>';
     return gitLogLineHtml;
 }
 
 const writeIndexHtml = (gitLogLines) => {
+    gitLogLines.forEach(line => console.log(`<<<${line}>>>`));
     const graphString = gitLogLines.map(gitLogLineMapper).join('\n');
     const htmlContent = `
 <!DOCTYPE html>
@@ -193,10 +214,8 @@ h1 {
   font-family: courier;
   font-size: 160%;
 }
-.git-graph .commit {
+.commit p {
     margin: 2px 0;
-}
-.commit {
     display: inline;
 }
 </style>
