@@ -9862,8 +9862,36 @@ const commitIdFromMessage = (commitMessage, gitLogLines) => {
 
 const writeIndexHtml = (gitLogLines) => {
     const graphString = gitLogLines.map(gitLogLine => `<p id="${commitIdFromFromLine(gitLogLine)}">${gitLogLine}</p>`).join('\n');
-    let htmlContent = fs.readFileSync('index.html');
-    htmlContent.replace('GRAPH_STRING', graphString);
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+h1 {
+  color: blue;
+  font-family: verdana;
+  font-size: 300%;
+}
+.git-graph {
+  font-weight: bold;
+  font-family: courier;
+  font-size: 160%;
+}
+.git-graph p {
+    margin: 2px 0;
+}
+</style>
+</head>
+<body>
+<h1>Git Log Graph</h1>
+
+<div class="git-graph">
+${graphString}
+</div>
+
+</body>
+</html>
+    `;
     if (fs.existsSync('docs')) {
         fs.rmSync('docs', {recursive: true, force: true});
     }
