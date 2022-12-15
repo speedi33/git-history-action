@@ -9881,8 +9881,11 @@ const gitLogLineMapper = (gitLogLine) => {
         const commitAuthor = commitLine[2].trim();
 
         gitLogLineHtml += `<p>${graph}</p>`;
+        gitLogLineHtml += '<p> - </p>';
         gitLogLineHtml += `<p>${commitId}</p>`;
+        gitLogLineHtml += '<p> - </p>';
         gitLogLineHtml += `<p>${commitMessage}</p>`;
+        gitLogLineHtml += '<p> - </p>';
         gitLogLineHtml += `<p>${commitAuthor}</p>`;
     }
 
