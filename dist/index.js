@@ -9867,6 +9867,7 @@ const gitLogLineMapper = (gitLogLine) => {
         gitLogLineHtml += `<p>${commitDetail}</p>`;
     }
     gitLogLineHtml += '</div>';
+    return gitLogLineHtml;
 }
 
 const writeIndexHtml = (gitLogLines) => {
