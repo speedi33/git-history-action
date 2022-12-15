@@ -9860,8 +9860,17 @@ const commitIdFromMessage = (commitMessage, gitLogLines) => {
     }
 }
 
+const gitLogLineMapper = (gitLogLine) => {
+    const commitLine = gitLogLine.split(' - ');
+    let gitLogLineHtml = '<div class="commit">';
+    for (const commitDetail of commitLine) {
+        gitLogLineHtml += `<p>${commitDetail}</p>`;
+    }
+    gitLogLineHtml += '</div>';
+}
+
 const writeIndexHtml = (gitLogLines) => {
-    const graphString = gitLogLines.map(gitLogLine => `<p id="${commitIdFromFromLine(gitLogLine)}">${gitLogLine}</p>`).join('\n');
+    const graphString = gitLogLines.map(gitLogLineMapper).join('\n');
     const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -9877,8 +9886,11 @@ h1 {
   font-family: courier;
   font-size: 160%;
 }
-.git-graph p {
+.git-graph .commit {
     margin: 2px 0;
+}
+.commit {
+    display: inline;
 }
 </style>
 </head>
