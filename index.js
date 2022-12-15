@@ -185,7 +185,6 @@ try {
   bash.execSync(`git log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all > ${gitLogFile}`);
   const gitLog = bash.execSync(`cat ${gitLogFile}`).toString().trim();
   bash.execSync(`rm ${gitLogFile}`);
-  console.log(`Your Mermaid string:\n${mermaidGitGraphString}`);
   writeIndexHtml(gitLog.split('\n'));
   const time = (new Date()).toTimeString();
   core.setOutput("time", time);
