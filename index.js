@@ -163,10 +163,11 @@ const gitLogLineMapper = (gitLogLine) => {
     let gitLogLineHtml = '<div class="commit">';
 
     if (commitLine.length === 1) {
+        const graphLine = commitLine[0];
         let color = 'black';
         gitLogLineHtml += '<p>';
-        for (let i = 0; i < commitLine.length; i++) {
-            const currentChar = commitLine.charAt(i);
+        for (let i = 0; i < graphLine.length; i++) {
+            const currentChar = graphLine.charAt(i);
             if (currentChar === '/' || currentChar === '\\') {
                 if (i === 1) {
                     color = 'red';
