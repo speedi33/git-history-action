@@ -153,20 +153,31 @@ const generateMermaidGitGraphString = (gitLogString) => {
 const writeIndexHtml = (mermaidString, gitLogLines) => {
     const graphString = gitLogLines.map(gitLogLine => `<p>${gitLogLine}</p>`).join('\n');
     const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+h1 {
+  color: blue;
+  font-family: verdana;
+  font-size: 300%;
+}
+.git-graph {
+  font-weight: bold;
+  font-family: courier;
+  font-size: 160%;
+}
+</style>
+</head>
+<body>
     <h1>Hello</h1>
-<pre class="mermaid">
-%%{init: { 'logLevel': 'debug', 'theme': 'base', 'gitGraph': {'rotateCommitLabel': true, 'mainBranchName': 'master'}} }%%
-${mermaidString}
-</pre>
 
 <div class="git-graph">
 ${graphString}
 </div>
 
-<script type="module">
-  import mermaid from 'https://unpkg.com/mermaid@9/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true });
-</script>
+</body>
+</html>
     `;
 
     if (fs.existsSync('docs')) {
