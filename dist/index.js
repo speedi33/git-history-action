@@ -9852,36 +9852,43 @@ const commitIdFromFromLine = (gitLogLine) => {
     return commitId;
 }
 
+const COLUMN_COLORS = {
+    0: 'black',
+    1: 'red',
+    3: 'blue',
+    5: 'green',
+    7: 'yellow'
+};
+
 const gitLogLineMapper = (gitLogLine) => {
     const commitLine = gitLogLine.split(' - ');
     let gitLogLineHtml = '<div class="commit">';
 
+    console.log(`gitLogLine=${gitLogLine}`);
+    console.log(`commitLine=${commitLine}`);
+
     if (commitLine.length === 1) {
+        console.log('BRANCH LINE!');
         const graphLine = commitLine[0];
-        let color = 'black';
         gitLogLineHtml += '<p>';
         for (let i = 0; i < graphLine.length; i++) {
             const currentChar = graphLine.charAt(i);
+            console.log(`currentChar <${currentChar}>`);
             if (currentChar === '/' || currentChar === '\\') {
-                if (i === 1) {
-                    color = 'red';
-                } else {
-                    color = 'blue';
-                }
-                gitLogLineHtml += `<span style="color:${color}">${currentChar}</span>`;
+                gitLogLineHtml += `<span style="color:${COLUMN_COLORS[i]}">${currentChar}</span>`;
             } else {
                 gitLogLineHtml += currentChar;
             }
         }
         gitLogLineHtml += '</p>';
     } else {
-        const graph = commitLine[0].trim().split(' ')[0];
-        const commitId = commitLine[0].trim().split(' ')[1];
+        const lastSpaceIndex = commitLine[0].trim().lastIndexOf(' ');
+        const graph = commitLine[0].trim().substring(0, lastSpaceIndex);
+        const commitId = commitLine[0].trim().substring(lastSpaceIndex + 1);
         const commitMessage = commitLine[1].trim();
         const commitAuthor = commitLine[2].trim();
 
         gitLogLineHtml += `<p>${graph}</p>`;
-        gitLogLineHtml += '<p> - </p>';
         gitLogLineHtml += `<p>${commitId}</p>`;
         gitLogLineHtml += '<p> - </p>';
         gitLogLineHtml += `<p>${commitMessage}</p>`;
@@ -9897,6 +9904,7 @@ const gitLogLineMapper = (gitLogLine) => {
 const writeIndexHtml = (gitLogLines) => {
     gitLogLines.forEach(line => console.log(`<<<${line}>>>`));
     const graphString = gitLogLines.map(gitLogLineMapper).join('\n');
+    console.log(`GRAPH_STRING:\n${graphString}`);
     const htmlContent = `
 <!DOCTYPE html>
 <html>
