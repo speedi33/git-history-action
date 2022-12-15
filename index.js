@@ -167,10 +167,13 @@ h1 {
   font-family: courier;
   font-size: 160%;
 }
+.git-graph p {
+    margin: 2px 0;
+}
 </style>
 </head>
 <body>
-    <h1>Hello</h1>
+<h1>Git Log Graph</h1>
 
 <div class="git-graph">
 ${graphString}
