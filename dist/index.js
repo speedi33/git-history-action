@@ -2835,6 +2835,7 @@ const COLUMN_COLORS = {
     3: 'blue',
     5: 'green',
     7: 'yellow',
+    9: 'aqua',
     'branchName': 'purple'
 };
 
@@ -2847,8 +2848,7 @@ const gitLogLineMapper = (gitLogLine) => {
         gitLogLineHtml += '<p>';
         for (let i = 0; i < graphLine.length; i++) {
             const currentChar = graphLine.charAt(i);
-            console.log(`currentChar <${currentChar}>`);
-            if (currentChar === '/' || currentChar === '\\') {
+            if (currentChar === '/' || currentChar === '\\' || currentChar === '|') {
                 gitLogLineHtml += `<span style="color:${COLUMN_COLORS[i]}">${currentChar}</span>`;
             } else {
                 gitLogLineHtml += currentChar;
@@ -2877,11 +2877,12 @@ const gitLogLineMapper = (gitLogLine) => {
         gitLogLineHtml += `<p>${commitMessage}</p>`;
         gitLogLineHtml += '<p> - </p>';
 
-        if (commitAuthorAndDecoration.includes(' ')) {
+        if (commitAuthorAndDecoration.includes('(') && commitAuthorAndDecoration.includes(')')) {
             // decoration (branch name) present
-            const firstSpaceIndex = commitAuthorAndDecoration.indexOf(' ');
-            const commitAuthor = commitAuthorAndDecoration.substring(0, firstSpaceIndex);
-            const commitBranchName = commitAuthorAndDecoration.substring(firstSpaceIndex + 1);
+            const openParenthesisIndex = commitAuthorAndDecoration.indexOf('(');
+            const commitAuthor = commitAuthorAndDecoration.substring(0, openParenthesisIndex - 1);
+            const closingParenthesisIndex = commitAuthorAndDecoration.indexOf(')');
+            const commitBranchName = commitAuthorAndDecoration.substring(openParenthesisIndex + 1, closingParenthesisIndex);
             commitAuthorAndDecoration = `${commitAuthor} <span style="color: ${COLUMN_COLORS['branchName']};">${commitBranchName}</span>`;
         }
         gitLogLineHtml += `<p>${commitAuthorAndDecoration}</p>`;
