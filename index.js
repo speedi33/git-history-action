@@ -163,18 +163,15 @@ const COLUMN_COLORS = {
     1: 'red',
     3: 'blue',
     5: 'green',
-    7: 'yellow'
+    7: 'yellow',
+    'branchName': 'purple'
 };
 
 const gitLogLineMapper = (gitLogLine) => {
     const commitLine = gitLogLine.split(' - ');
     let gitLogLineHtml = '<div class="commit">';
 
-    console.log(`gitLogLine=${gitLogLine}`);
-    console.log(`commitLine=${commitLine}`);
-
     if (commitLine.length === 1) {
-        console.log('BRANCH LINE!');
         const graphLine = commitLine[0];
         gitLogLineHtml += '<p>';
         for (let i = 0; i < graphLine.length; i++) {
@@ -192,7 +189,7 @@ const gitLogLineMapper = (gitLogLine) => {
         let graph = commitLine[0].trim().substring(0, lastSpaceIndex);
         const commitId = commitLine[0].trim().substring(lastSpaceIndex + 1);
         const commitMessage = commitLine[1].trim();
-        const commitAuthor = commitLine[2].trim();
+        let commitAuthorAndDecoration = commitLine[2].trim();
 
         if (graph.length > 1) {
             // commit on branch
@@ -208,18 +205,21 @@ const gitLogLineMapper = (gitLogLine) => {
         gitLogLineHtml += '<p> - </p>';
         gitLogLineHtml += `<p>${commitMessage}</p>`;
         gitLogLineHtml += '<p> - </p>';
-        gitLogLineHtml += `<p>${commitAuthor}</p>`;
-    }
 
-    
+        if (commitAuthorAndDecoration.includes(' ')) {
+            // decoration (branch name) present
+            const commitAuthor = commitAuthorAndDecoration.split(' ')[0];
+            const commitBranchName = commitAuthorAndDecoration.split(' ')[1];
+            commitAuthorAndDecoration = `${commitAuthor} <span style="color: ${COLUMN_COLORS['branchName']};">${commitBranchName}</span>`;
+        }
+        gitLogLineHtml += `<p>${commitAuthorAndDecoration}</p>`;
+    }
     gitLogLineHtml += '</div>';
     return gitLogLineHtml;
 }
 
 const writeIndexHtml = (gitLogLines) => {
-    gitLogLines.forEach(line => console.log(`<<<${line}>>>`));
     const graphString = gitLogLines.map(gitLogLineMapper).join('\n');
-    console.log(`GRAPH_STRING:\n${graphString}`);
     const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -259,10 +259,7 @@ ${graphString}
 }
 
 try {
-  // `who-to-greet` input defined in action metadata file
-  const nameToGreet = core.getInput('who-to-greet');
   const gitLogFile = 'git.log';
-  console.log(`Hello ${nameToGreet}!`);
   bash.execSync(`git log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all > ${gitLogFile}`);
   const gitLog = bash.execSync(`cat ${gitLogFile}`).toString().trim();
   bash.execSync(`rm ${gitLogFile}`);
