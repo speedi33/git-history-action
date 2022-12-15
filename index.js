@@ -252,11 +252,12 @@ ${graphString}
 </body>
 </html>
     `;
-    if (fs.existsSync('docs')) {
-        fs.rmSync('docs', {recursive: true, force: true});
+    const gitLogGraphDirectory = 'git-log-graph';
+    if (fs.existsSync(gitLogGraphDirectory)) {
+        fs.rmSync(gitLogGraphDirectory, {recursive: true, force: true});
     }
-    fs.mkdirSync('docs');
-    fs.writeFileSync('docs/index.html', htmlContent);
+    fs.mkdirSync(gitLogGraphDirectory);
+    fs.writeFileSync(`${gitLogGraphDirectory}/index.html`, htmlContent);
 }
 
 try {
