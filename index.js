@@ -208,8 +208,9 @@ const gitLogLineMapper = (gitLogLine) => {
 
         if (commitAuthorAndDecoration.includes(' ')) {
             // decoration (branch name) present
-            const commitAuthor = commitAuthorAndDecoration.split(' ')[0];
-            const commitBranchName = commitAuthorAndDecoration.split(' ')[1];
+            const firstSpaceIndex = commitAuthorAndDecoration.indexOf(' ');
+            const commitAuthor = commitAuthorAndDecoration.substring(0, firstSpaceIndex);
+            const commitBranchName = commitAuthorAndDecoration.substring(firstSpaceIndex + 1);
             commitAuthorAndDecoration = `${commitAuthor} <span style="color: ${COLUMN_COLORS['branchName']};">${commitBranchName}</span>`;
         }
         gitLogLineHtml += `<p>${commitAuthorAndDecoration}</p>`;
