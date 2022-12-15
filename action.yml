@@ -2,7 +2,7 @@ name: 'Git Log Graph'
 description: 'Displays a git-log graph for your repository'
 inputs:
   upload-path:
-    description: 'The path that is put in the \'Upload artifact\' step.'
+    description: 'The path that is put in the "Upload artifact" step.'
     required: true
     default: 'git-log-graph'
 runs:
