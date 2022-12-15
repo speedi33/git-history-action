@@ -9721,7 +9721,7 @@ const isMergeLine = (gitLogLine) => {
     return isSpecialLine(gitLogLine, '|/');
 }
 
-const tryToGetBranchNameFromNextLine = (nextGitLogLine) => {
+const getBranchNameFromNextLine = (nextGitLogLine) => {
     const branchNamePrefix = '(';
     const branchNameSuffix = ')';
     if (nextGitLogLine.includes(branchNamePrefix) && nextGitLogLine.includes(branchNameSuffix)) {
@@ -9729,7 +9729,8 @@ const tryToGetBranchNameFromNextLine = (nextGitLogLine) => {
         const branchNameEndIndex = nextGitLogLine.lastIndexOf(branchNameSuffix);
         return nextGitLogLine.substring(branchNameStartIndex, branchNameEndIndex);
     } else {
-        return 'feature_branch';
+        featureBranchCounter++;
+        return `feature_branch_${featureBranchCounter}`;
     }
 }
 
@@ -9746,35 +9747,73 @@ const reverseLogLines = (gitLogLines) => {
     return reversedLogLines;
 }
 
+const branchIndexOfLine = (gitLogLine) => {
+    return gitLogLine.indexOf('*');
+}
+
+const branchNameOfLine = (gitLogLine) => {
+    const gitLogLineElements = gitLogLine.split(' - ');
+    const commitAuthorAndDecoration = gitLogLineElements[gitLogLineElements.length - 1];
+    const branchNamePrefix = '(';
+    const branchNameSuffix = ')';
+    let branchName;
+    if (commitAuthorAndDecoration.includes(branchNamePrefix) && commitAuthorAndDecoration.includes(branchNameSuffix)) {
+        const branchNameStartIndex = commitAuthorAndDecoration.lastIndexOf(branchNamePrefix) + 1;
+        const branchNameEndIndex = commitAuthorAndDecoration.lastIndexOf(branchNameSuffix);
+        branchName = commitAuthorAndDecoration.substring(branchNameStartIndex, branchNameEndIndex);
+    }
+    return branchName;
+}
+
+const searchBranchNameForBranchLine = (branchLine, gitLogLines) => {
+    let branchName = 'feature_branch';
+    let branchIndex = branchLine.indexOf('\\') + 1; // since '\' opens a branch, branch index is 1 more
+    
+    let nextLine = gitLogLines[gitLogLines.indexOf(branchLine) + 1];
+    while (!isMergeLine(nextLine) && branchIndexOfLine(nextLine) === branchIndex) {
+        branchName = branchNameOfLine(nextLine);
+        nextLine = gitLogLines[gitLogLines.indexOf(nextLine) + 1];
+    }
+    return branchName;
+}
+
 const generateMermaidGitGraphString = (gitLogString) => {
     const gitLogLines = reverseLogLines(gitLogString.split('\n'));
     let mermaidGitGraphString = 'gitGraph\n';
     let branchName;
     let previousBranchIndex;
 
+
+
     gitLogLines.forEach((gitLogLine, index) => {
         console.log(`>>>${gitLogLine}<<< commit line? ${isCommitLine(gitLogLine)}`);
         if (isCommitLine(gitLogLine)) {
-            console.log(`commit line -> previousBranchIndex: ${previousBranchIndex}`);
+            const branchIndex = gitLogLine.indexOf('*');
             const gitLogLineWithoutAsterisk = gitLogLine.split('*')[1];
             const commitDetails = gitLogLineWithoutAsterisk.split('-');
             const commitId = commitDetails[0].trim();
             if (index > 0 && isMergeLine(gitLogLines[index - 1])) {
-                mermaidGitGraphString += `  merge ${branchName} id: "${commitId}"\n`;
+                mermaidGitGraphString += `merge ${branchName} id: "${commitId}"\n`;
             } else {
-                if (previousBranchIndex && previousBranchIndex !== gitLogLine.indexOf('*')) {
-                    mermaidGitGraphString += '  checkout main\n';
+                if (previousBranchIndex && previousBranchIndex !== branchIndex) {
+                    mermaidGitGraphString += 'checkout main\n';
                 }
-                mermaidGitGraphString += `  commit id: "${commitId}"\n`;
+                mermaidGitGraphString += `commit id: "${commitId}"\n`;
             }
             previousBranchIndex = gitLogLine.indexOf('*');
-        } else {
-            if (isBranchLine(gitLogLine)) {
-                branchName = tryToGetBranchNameFromNextLine(gitLogLines[index + 1]);
-                mermaidGitGraphString += `  branch ${branchName}\n  checkout ${branchName}\n`;
-            } else if (isMergeLine(gitLogLine)) {
-                mermaidGitGraphString += '  checkout main\n';
+        } else if (isBranchLine(gitLogLine)) {
+            branchName = searchBranchNameForBranchLine(gitLogLine, gitLogLines);
+            if (!branchName.includes('HEAD -> master')) { // feature branch commits newer than master commits
+                const gitLogLineWithoutAsterisk = nextGitLogLine.split('*')[1];
+                const commitDetails = gitLogLineWithoutAsterisk.split('-');
+                const commitId = commitDetails[0].trim();
+                mermaidGitGraphString += `commit id: "${commitId}"\n`;
             }
+            mermaidGitGraphString += `branch ${branchName}\ncheckout ${branchName}\n`;
+        } else if (isMergeLine(gitLogLine)) {
+            mermaidGitGraphString += 'checkout main\n';
+        } else {
+            console.error(`Could not parse Git log line: <${gitLogLine}>`);
         }
     });
 
@@ -9805,13 +9844,18 @@ const generateMermaidGitGraphString = (gitLogString) => {
     return mermaidGitGraphString;
 }
 
-const writeIndexHtml = (mermaidString) => {
+const writeIndexHtml = (mermaidString, gitLogLines) => {
+    const graphString = gitLogLines.map(gitLogLine => `<p>${gitLogLine}</p>`).join('\n');
     const htmlContent = `
     <h1>Hello</h1>
 <pre class="mermaid">
-%%{init: { 'logLevel': 'debug', 'theme': 'base', 'gitGraph': {'rotateCommitLabel': true}} }%%
+%%{init: { 'logLevel': 'debug', 'theme': 'base', 'gitGraph': {'rotateCommitLabel': true, 'mainBranchName': 'master'}} }%%
 ${mermaidString}
 </pre>
+
+<div class="git-graph">
+${graphString}
+</div>
 
 <script type="module">
   import mermaid from 'https://unpkg.com/mermaid@9/dist/mermaid.esm.min.mjs';
@@ -9835,9 +9879,9 @@ try {
   const gitLog = bash.execSync(`cat ${gitLogFile}`).toString().trim();
   bash.execSync(`rm ${gitLogFile}`);
   console.log(`Your Git Log:\n${gitLog}`);
-  const mermaidGitGraphString = generateMermaidGitGraphString(gitLog);
+  const mermaidGitGraphString = 'awd'; // generateMermaidGitGraphString(gitLog);
   console.log(`Your Mermaid string:\n${mermaidGitGraphString}`);
-  writeIndexHtml(mermaidGitGraphString);
+  writeIndexHtml(mermaidGitGraphString, gitLog.split('\n'));
   const time = (new Date()).toTimeString();
   core.setOutput("time", time);
   // Get the JSON webhook payload for the event that triggered the workflow
