@@ -150,39 +150,26 @@ const generateMermaidGitGraphString = (gitLogString) => {
     return mermaidGitGraphString;
 }
 
-const writeIndexHtml = (mermaidString, gitLogLines) => {
-    const graphString = gitLogLines.map(gitLogLine => `<p>${gitLogLine}</p>`).join('\n');
-    const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-h1 {
-  color: blue;
-  font-family: verdana;
-  font-size: 300%;
+const commitIdFromFromLine = (gitLogLine) => {
+    let commitId = 'none'; // for none-commit lines
+    if (gitLogLine.includes('*')) {
+        commitId = gitLogLine.split('*')[1].split(' - ')[0].trim();
+    }
+    return commitId;
 }
-.git-graph {
-  font-weight: bold;
-  font-family: courier;
-  font-size: 160%;
+
+const commitIdFromMessage = (commitMessage, gitLogLines) => {
+    for (const gitLogLine of gitLogLines) {
+        if (gitLogLine.toLowerCase().includes(commitMessage)) {
+            return commitIdFromFromLine(gitLogLine);
+        }
+    }
 }
-.git-graph p {
-    margin: 2px 0;
-}
-</style>
-</head>
-<body>
-<h1>Git Log Graph</h1>
 
-<div class="git-graph">
-${graphString}
-</div>
-
-</body>
-</html>
-    `;
-
+const writeIndexHtml = (gitLogLines) => {
+    const graphString = gitLogLines.map(gitLogLine => `<p id="${commitIdFromFromLine(gitLogLine)}">${gitLogLine}</p>`).join('\n');
+    let htmlContent = fs.readFileSync('index.html');
+    htmlContent.replace('GRAPH_STRING', graphString);
     if (fs.existsSync('docs')) {
         fs.rmSync('docs', {recursive: true, force: true});
     }
@@ -198,10 +185,8 @@ try {
   bash.execSync(`git log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all > ${gitLogFile}`);
   const gitLog = bash.execSync(`cat ${gitLogFile}`).toString().trim();
   bash.execSync(`rm ${gitLogFile}`);
-  console.log(`Your Git Log:\n${gitLog}`);
-  const mermaidGitGraphString = 'awd'; // generateMermaidGitGraphString(gitLog);
   console.log(`Your Mermaid string:\n${mermaidGitGraphString}`);
-  writeIndexHtml(mermaidGitGraphString, gitLog.split('\n'));
+  writeIndexHtml(gitLog.split('\n'));
   const time = (new Date()).toTimeString();
   core.setOutput("time", time);
   // Get the JSON webhook payload for the event that triggered the workflow
