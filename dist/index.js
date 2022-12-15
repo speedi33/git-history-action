@@ -9883,12 +9883,21 @@ const gitLogLineMapper = (gitLogLine) => {
         gitLogLineHtml += '</p>';
     } else {
         const lastSpaceIndex = commitLine[0].trim().lastIndexOf(' ');
-        const graph = commitLine[0].trim().substring(0, lastSpaceIndex);
+        let graph = commitLine[0].trim().substring(0, lastSpaceIndex);
         const commitId = commitLine[0].trim().substring(lastSpaceIndex + 1);
         const commitMessage = commitLine[1].trim();
         const commitAuthor = commitLine[2].trim();
 
-        gitLogLineHtml += `<p>${graph}</p>`;
+        if (graph.length > 1) {
+            // commit on branch
+            const asteriskIndex = graph.indexOf('*');
+
+            const graphWithoutAsterisk = graph.substring(0, asteriskIndex);
+            // asterisk is always one column moved to the right, so -1 to get the actual index
+            graph = `${graphWithoutAsterisk}<span style="color:${COLUMN_COLORS[asteriskIndex - 1]};">*</span>`;
+        }
+
+        gitLogLineHtml += `<p>${graph} </p>`;
         gitLogLineHtml += `<p>${commitId}</p>`;
         gitLogLineHtml += '<p> - </p>';
         gitLogLineHtml += `<p>${commitMessage}</p>`;
